@@ -1,6 +1,21 @@
 import re
 import os
 
+
+def to_float(amount: str):
+    """
+    Returns a float given a price string
+
+        Parameters:
+            amount (str): The amount to convert
+
+        Returns:
+            float: amount as numeric
+    """
+
+    return float("".join(amount.split(",")))
+
+
 def day_rank(date):
     """
     Returns an integer representing the number of days since 01/01/0000
@@ -47,6 +62,7 @@ def day_rank(date):
 
     return out
 
+
 def categorize(vendor, categories):
     """
     Returns a string match to a given set of categories
@@ -64,6 +80,7 @@ def categorize(vendor, categories):
             return ".".join([line[n].strip() for n in range(1, len(line))])
     return "~"
 
+
 def file_extension(file_path):
     """
     Returns the extension of a file if there is one
@@ -76,11 +93,12 @@ def file_extension(file_path):
     """
 
     _, f_name = os.path.split(file_path)
-    
+
     f_name_split = f_name.split(".")
     if len(f_name_split) > 1:
         return f_name_split[-1]
     return ""
+
 
 def document_info(file_path):
     """
@@ -110,24 +128,18 @@ def document_info(file_path):
         ]
         for i, m in enumerate(MONTHS):
             if m == mo_str:
-                return i+1
-            
+                return i + 1
+
         raise ValueError(f"{mo_str} is not a valid month")
 
-        
     NAME_CONVENTIONS = {
-        "PNC" : "Statement_([a-zA-Z]+)_\\d+_(\\d+).pdf",
-        "Chase" : "(\\d{4})(\\d{2})\\d{2}-statements-\\d{4}-.pdf",
-        "FNB" : "Statement_(\\d{4})-(\\d{2})-\\d{2}.pdf",
-        "Discover" : "Discover-Statement-(\\d{4})(\\d{2})\\d{2}.csv"
+        "PNC": "Statement_([a-zA-Z]+)_\\d+_(\\d+).pdf",
+        "Chase": "(\\d{4})(\\d{2})\\d{2}-statements-\\d{4}-.pdf",
+        "FNB": "Statement_(\\d{4})-(\\d{2})-\\d{2}.pdf",
+        "Discover": "Discover-Statement-(\\d{4})(\\d{2})\\d{2}.csv",
     }
 
-    info = {
-        "name" : None,
-        "bank" : None,
-        "month" : None,
-        "year" : None
-    }
+    info = {"name": None, "bank": None, "month": None, "year": None}
 
     _, f_name = os.path.split(file_path)
 
@@ -144,7 +156,7 @@ def document_info(file_path):
         raise ValueError(f"{file_path} could be a document for multiple banks")
     elif len(banks) == 0:
         raise ValueError(f"{file_path} does not match any known bank")
-    
+
     bank = banks.pop()
     groups = re.search(NAME_CONVENTIONS[bank], f_name)
 
@@ -152,7 +164,9 @@ def document_info(file_path):
     info["name"] = f_name
 
     if bank == "PNC":
-        info["month"], info["year"] = month_convert(groups.group(1)), int(groups.group(2))
+        info["month"], info["year"] = month_convert(groups.group(1)), int(
+            groups.group(2)
+        )
     elif bank in ["Chase", "FNB", "Discover"]:
         info["year"], info["month"] = int(groups.group(1)), int(groups.group(2))
 

@@ -14,10 +14,10 @@ def parse(statement_path):
         Returns:
             list: Transactions from the file
     """
-        
+
     info = helpers.document_info(statement_path)
     bank, year, month = info["bank"], info["year"], info["month"]
-    
+
     transactions = []
     if bank == "PNC":
         transactions = pnc_parse(statement_path)
@@ -26,7 +26,7 @@ def parse(statement_path):
     elif bank == "FNB":
         transactions = fnb_parse(statement_path)
     elif bank == "Discover":
-        transactions = discover_parse(statement_path) 
+        transactions = discover_parse(statement_path)
 
     for i, trans in enumerate(transactions):
         local_year = year
@@ -112,7 +112,7 @@ def pnc_parse(statement_path):
             curr_transaction["date"] = date.string
         elif amount is not None:
             if curr_transaction["date"] is not None:
-                curr_transaction["amount"] = float("".join(amount.string.split(",")))
+                curr_transaction["amount"] = helpers.to_float(amount.string)
             else:
                 for key in curr_transaction:
                     curr_transaction[key] = None
@@ -147,13 +147,53 @@ def pnc_parse(statement_path):
 def fnb_parse(statement_path):
     reader = PdfReader(statement_path)
 
+    below_header = [False]
+    transactions = []
+    curr_transaction = {"date": None, "vendor": None, "amount": None}
+    prev_balance = [None]
+
     def visitor(text, cm, tm, font_dict, font_size):
-        print(repr(text))
+        header = re.search(
+            "Post\\s+Date\\s+Description\\s+Debits\\s+Credits\\s+Balance", text
+        )
+
+        if header is not None:
+            below_header[0] = True
+
+        if text.strip() == "":
+            below_header[0] = False
+
+        if below_header[0]:
+            date = re.search("(\\d{2}\\/\\d{2})\\/\\d{4}\\s+([^\\$\\n]+)", text)
+            price = re.search("\\$([\\d,]+\\.\\d{2})\\s+\\$([\\d,]+\\.\\d{2})", text)
+
+            if date is not None:
+                for key in curr_transaction:
+                    curr_transaction[key] = None
+                curr_transaction["date"] = date.group(1)
+                curr_transaction["vendor"] = date.group(2)
+            if price is not None:
+                amount = helpers.to_float(price.group(1))
+                balance = helpers.to_float(price.group(2))
+
+                neg = False
+                if prev_balance[0] is not None:
+                    neg = balance > prev_balance[0]
+                prev_balance[0] = balance
+
+                curr_transaction["amount"] = (-1 if neg else 1) * amount
+                curr_transaction["vendor"] = curr_transaction["vendor"].replace(
+                    "\n", " "
+                )
+                transactions.append(curr_transaction.copy())
+            if price is None and date is None:
+                curr_transaction["vendor"] = curr_transaction["vendor"] + text
 
     for page in reader.pages:
         page.extract_text(visitor_text=visitor)
 
-    return []
+    return transactions
+
 
 def discover_parse(statement_path):
     transactions = []
@@ -162,14 +202,11 @@ def discover_parse(statement_path):
         for i, line in enumerate(reader):
             if i != 0:
                 transactions.append(
-                    {
-                        "date": line[0][:-5],
-                        "amount": line[3],
-                        "vendor": line[2]
-                    }
+                    {"date": line[0][:-5], "amount": line[3], "vendor": line[2]}
                 )
-    print(transactions)
+
     return transactions
+
 
 def _parse(reader: PdfReader):
     """

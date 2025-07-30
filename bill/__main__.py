@@ -1,4 +1,5 @@
 import argparse
+import os
 from . import tracker
 
 if __name__ == "__main__":
@@ -27,4 +28,8 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    tracker.track(args.statement_dir, args.output_dir, args.category_file)
+    tracker.track(
+        os.path.abspath(args.statement_dir),
+        os.path.abspath(args.output_dir),
+        os.path.abspath(args.category_file),
+    )
