@@ -1,4 +1,8 @@
-# Bill Tracker
+============
+Bill Tracker
+============
+
+Utility to automatically parse bank account and credit card statements for more streamlined bill tracking.
 
 Currently supports:
 
@@ -7,38 +11,46 @@ Currently supports:
 - FNB (pdf)
 - Discover (csv)
 
-## How to run
+Installation
+============
 
-```
-python -m bill_tracker [-h] statement_dir [output_dir] [category_file]
+``git clone https://github.com/mabelechols/bill_tracker.git .``
 
-positional arguments:
-  statement_dir  Directory containing bank statements
-  output_dir     Directory to output .csv into
-  category_file  Directory of categories.csv to use for categorization
+``pip install ./bill_tracker``
 
-options:
-  -h, --help     show this help message and exit
-```
+``python -m bill -h``
 
-## Categories
+How to run
+==========
+``python -m bill [-h] statement_dir [output_dir] [category_file]``
+
+Positional Arguments:
+ statement_dir  Directory containing bank statements
+ output_dir     Directory to output .csv into
+ category_file  Directory of categories.csv to use for categorization
+
+Options:
+ -h, --help     Show help message
+
+Categories
+============
 
 categories.csv consists of categorizations in the following form:
-`([reg_ex], [category_1], [category_2], ...)`
+``([reg_ex], [category_1], [category_2], ...)``
 
-`[reg_ex]` is used to search transactions. If a match is found, the item is considered categorized. The first match is always used.
+``[reg_ex]`` is used to search transactions. If a match is found, the item is considered categorized. The first match is always used.
 
-`[category_1]` is required, and is the main category of the item. Special arguments `ignore` and `~` can be used for the following:
+``[category_1]`` is required, and is the main category of the item. Special arguments `ignore` and `~` can be used for the following:
 
-- `ignore` : Do not record items matching this search into the output
-- `~` : No category
+- ``ignore`` : Do not record items matching this search into the output
+- ``~`` : No category
 
-Categories may have more or less arbitrary names, excluding the use of the following characters: `.,/\`
+Categories may have more or less arbitrary names, excluding the use of the following characters: ``.,/\``
 
-`[category_2]` and so forth are optional, and allow for the use of subcategories. An alternative way to identify subcategories would be to seperate categories with a `.`. For example:
+``[category_2]`` and so forth are optional, and allow for the use of subcategories. An alternative way to identify subcategories would be to seperate categories with a `.`. For example:
 
-`[reg_ex] ,food, grocery, bread` is equivalent to `[reg_ex], food.grocery.bread`
+``[reg_ex] ,food, grocery, bread`` is equivalent to ``[reg_ex], food.grocery.bread``
 
 A mix may also be used if desired, for example:
 
-`[reg_ex] ,food.grocery, bread` and `[reg_ex], food, grocery.bread` are both equivalent to the above statements
+``[reg_ex] ,food.grocery, bread`` and ``[reg_ex], food, grocery.bread`` are both equivalent to the above statements
