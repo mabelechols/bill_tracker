@@ -25,12 +25,12 @@ How to run
 ``python -m bill [-h] statement_dir [output_dir] [category_file]``
 
 Positional Arguments:
- statement_dir  Directory containing bank statements
- output_dir     Directory to output .csv into
- category_file  Directory of categories.csv to use for categorization
+ 
+ statement_dir    Directory containing bank statements
 
-Options:
- -h, --help     Show help message
+ output_dir       Directory to output .csv into
+
+ category_file    Directory of categories.csv to use for categorization
 
 Categories
 ============
