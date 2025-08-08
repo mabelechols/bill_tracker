@@ -63,24 +63,6 @@ def day_rank(date):
     return out
 
 
-def categorize(vendor, categories):
-    """
-    Returns a string match to a given set of categories
-
-        Parameters:
-            vendor (str): The string to categorize
-            categories (list): A list of categories in the form (reg_ex, category, subcategory, ...)
-
-        Returns:
-            str: The first matched category
-    """
-
-    for line in categories:
-        if re.search(line[0], vendor, re.IGNORECASE) is not None:
-            return ".".join([line[n].strip() for n in range(1, len(line))])
-    return "~"
-
-
 def file_extension(file_path):
     """
     Returns the extension of a file if there is one

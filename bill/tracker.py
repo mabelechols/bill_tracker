@@ -3,6 +3,7 @@ from . import parser
 import csv
 from . import helpers
 import shutil
+from . import categorize
 
 
 def track(in_dir, out_dir, cat_file):
@@ -87,6 +88,8 @@ def track(in_dir, out_dir, cat_file):
 
     # Write uncategorized vendors to file
     out_txt = ""
+
+    categorize.categorize(uncat.keys())
 
     if len(uncat) > 0:
         print(f"Warning: {len(uncat)} uncategorized vendors found:")
