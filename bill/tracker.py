@@ -115,5 +115,5 @@ def track(in_dir, out_dir, cat_file):
             f_stream.write(out_txt)
 
         print(
-            f"Uncategorized vendors written to {os.path.join(out_dir, "uncategorized.txt")}"
+            f"Uncategorized vendors written to {os.path.join(out_dir, 'uncategorized.txt')}"
         )
