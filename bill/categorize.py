@@ -1,6 +1,5 @@
 from Levenshtein import distance
 import numpy as np
-import matplotlib.pyplot as plt
 import os
 
 try:
@@ -36,8 +35,9 @@ class CategorySelector:
 
             main = cat_split[0]
             tail = cat_split[1:]
-
-            structure[main] = {}
+            
+            if main not in structure:
+                structure[main] = {}
             if len(tail) > 0:
                 _insert_category(structure[main], ".".join(tail))
 
@@ -74,18 +74,21 @@ class CategorySelector:
             if main in structure:
                 return f"{main}.{select_helper(structure[main], ".".join(tail))}"
             else:
-                return f"{main}"
+                if len(tail) == 0:
+                    return f"{main}"
+                
+                return f"{main}.{select_helper({}, ".".join(tail))}"
 
         print("Pick a category or enter a new one:")
         print(self)
         sym_cat = input("Category: ")
         cat = select_helper(self.structure, sym_cat).rstrip(".")
+        print(cat)
         self.add_category(cat)
 
         return cat
 
-
-def categorize(transactions, cat_file):
+def categorize(transactions, cat_file, write=False):
     uncat_ti: set = set(
         [i for i in range(len(transactions))]
     )  # Uncategorized transactions as indicies for transactions
@@ -103,17 +106,21 @@ def categorize(transactions, cat_file):
     )  # Dictionary to convert inds of uncat_vendors to inds of transactions
 
     # Check the category file and remove transactions which are already categorized
+    file_cats = read_categories(cat_file)
+
     for i, transaction in enumerate(transactions):
-        cat = trans_categorize(transaction["vendor"], read_categories(cat_file))
+        cat = trans_categorize(transaction["vendor"], file_cats)
         if cat != "~":
             uncat_ti.remove(i)
             categorized[i] = cat
         else:
             if transaction["vendor"] not in uncat_vendors:
                 uncat_vendors.append(transaction["vendor"])
-            ui_ti[len(uncat_vendors) - 1] = i
+                ui_ti[len(uncat_vendors) - 1] = []
+            ui_ti[len(uncat_vendors) - 1].append(i) 
 
     uncat_ui = set([i for i in range(len(uncat_vendors))])
+    used = []
 
     # Create selector
     sel = CategorySelector(categorized)
@@ -122,31 +129,97 @@ def categorize(transactions, cat_file):
     dist_mat = distance_matrix(uncat_vendors)
 
     N = 5  # How many matches to show per round
+    if len(uncat_vendors) > 0:
+        VEND_WIDTH = len(max(uncat_vendors, key=len))
+    else:
+        VEND_WIDTH = 0
 
     while len(uncat_ui) > 0:
         vi = uncat_ui.pop()
         vendor = uncat_vendors[vi]
 
-        matches = closest_match(vi, dist_mat)
+        vendors = [vi]
+        prev_l = 1
 
-        nn = min(N, len(uncat_ui))
-        print(f"{vendor}\nThe closest {nn} matches are:")
-        for i in range(nn):
-            mi = int(matches[1, i])
-            mdist = matches[0, i]
+        while True:
+            matches = closest_match(vendors, dist_mat, vendors + used)
 
-            print(f"\t[{i+1}] {uncat_vendors[mi]}")
+            nn = min(N, len(uncat_ui))
+            if len(vendors) == 1:
+                print(f"Vendor:\n\t{vendor}")
+            else:
+                print(f"Vendors:")
+                for i in vendors:
+                    print(f"\t{uncat_vendors[i]}")
 
-        input()
+            print(f"The closest {nn} matches are:")
+            for i in range(nn):
+                mi = int(matches[1, i])
+                mdist = matches[0, i]
 
+                print(f"\t[{i+1}] {uncat_vendors[mi]:<{VEND_WIDTH}} {helpers.percent_bar(1 - mdist)}")
+    
+            selection = input("Matches: ")
+            inds = helpers.parse_num_selection(selection)
 
-def closest_match(i: int | list[int], distance_matrix: np.ndarray):
+            for i in inds:
+                i = i-1
+                if i < nn and i >= 0:
+                    vendors.append(int(matches[1,i]))
+                else:
+                    raise IndexError(f"{i+1} out of range for selection of length {nn}")
+
+            if len(vendors) == prev_l:
+                break
+
+            prev_l = len(vendors)
+
+        cat = sel.select()
+        print("")
+        for ui in vendors:
+            tis = ui_ti[ui]
+            for ti in tis:
+                categorized[ti] = cat
+            used.append(ui)
+            try:
+                uncat_ui.remove(ui)
+            except:
+                pass
+        
+        # write to file
+
+        if write:
+            with open(cat_file, "a+", newline="") as f_stream:
+                writer = csv.writer(f_stream)
+                for ui in vendors:
+                    vend = uncat_vendors[ui]
+                    writer.writerow([vend, *cat.split(".")])
+        
+    # Cleanup
+
+    categories = {}
+    for i, trans in enumerate(transactions):
+        cat = categorized[i]
+
+        if cat is not None:
+            categories[trans["vendor"]] = cat
+        
+    for i, trans in enumerate(transactions):
+        cat = categorized[i]
+
+        if cat is None and trans["vendor"] in categories:
+            categorized[i] = categories[trans]
+
+    return categorized
+
+def closest_match(i: int | list[int], distance_matrix: np.ndarray, exclude: list[int]=[]):
     """
     Return a sorted array of distances and transaction indices
 
     Args:
         i (int | list[int]): The index or indices of the transactions to include
         distance_matrix (np.ndarray): Pairwise distance matrix for all transactions
+        exclude (list[int]): A list of indices to ignore when sorting
 
     Returns:
         ndarray: Sorted array of distances and transaction indices
@@ -164,7 +237,10 @@ def closest_match(i: int | list[int], distance_matrix: np.ndarray):
     ind_vect = np.arange(dist_vect.size)
 
     sort = np.vstack((dist_vect, ind_vect))
-    return sort[:, sort[0, :].argsort()]
+    sort = np.delete(sort, exclude, axis=1)
+    raw_matches = sort[:, sort[0, :].argsort()]
+
+    return raw_matches
 
 
 def distance_matrix(vendors: list):
@@ -203,7 +279,7 @@ def trans_categorize(vendor, categories):
     """
 
     for line in categories:
-        if re.search(line[0], vendor, re.IGNORECASE) is not None:
+        if re.search(line[0], vendor, re.IGNORECASE) is not None or line[0].strip() == vendor.strip():
             return ".".join([line[n].strip() for n in range(1, len(line))])
     return "~"
 
@@ -238,29 +314,10 @@ def read_categories(cat_file):
     return categories
 
 
-def match_level(dist: float):
-    """
-    Returns a string (for printing) of the confidence of a match
-
-    Args:
-        dist (float): Normalized [0,1] distance between words
-
-    Returns:
-        str: Human readable match confidence
-    """
-    MATCH_LEVELS = [0.15, 0.3, 0.5]
-    MATCH_STRINGS = ["Very Good", "Good", "OK", "Bad"]
-
-    for i in range(len(MATCH_LEVELS)):
-        if dist < MATCH_LEVELS[i]:
-            return MATCH_STRINGS[i]
-
-    return MATCH_STRINGS[-1]
-
 
 if __name__ == "__main__":
-    TRANS_FILE = "C:\\Users\\aaech\\Documents\\Important\\Bill Tracking\\bill_output\\all_transactions.csv"
-    CAT_FILE = "C:\\Users\\aaech\\Documents\\Important\\Bill Tracking\\_categories.csv"
+    TRANS_FILE = "Z:\\bill_tracker\\bill_output\\all_transactions.csv"
+    CAT_FILE = "Z:\\bill_tracker\\_categories.csv"
 
     transactions = []
 

@@ -153,3 +153,47 @@ def document_info(file_path):
         info["year"], info["month"] = int(groups.group(1)), int(groups.group(2))
 
     return info
+
+def parse_num_selection(output : str):
+    raw_ranges = output.split(",")
+    stripped_ranges = []
+
+    for raw in raw_ranges:
+        stripped_ranges.append(raw.strip())
+
+    output: list = []
+    for rng in stripped_ranges:
+        if rng == "":
+            continue
+        try:
+            output.append(int(rng))
+        except:
+            try:
+                s = rng.split("-")
+                si = int(s[0])
+                ei = int(s[1])
+                output.extend(range(si, ei+1))
+            except:
+                raise ValueError(f"Unrecognized value {rng}")
+    
+    return output
+
+
+def percent_bar(p, w=10):
+    FILL = "▓"
+    UNFILL = "▒"
+
+    bar = ""
+    f = 0
+
+    for _ in range(w):
+        if p > f:
+            bar += FILL
+        else:
+            bar += UNFILL
+        
+        f += 1/w
+    
+    return f"{bar}"
+
+    

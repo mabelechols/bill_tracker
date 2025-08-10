@@ -9,7 +9,7 @@ with open("LICENSE") as f:
 
 setup(
     name="bill",
-    version="0.1.0",
+    version="0.2.0",
     description="Bank statement reading utility",
     long_description=readme,
     author="Mabel echols",

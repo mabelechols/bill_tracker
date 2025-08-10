@@ -42,6 +42,8 @@ def track(in_dir, out_dir, cat_file):
 
     # Read Transactions
     all_trans = []
+    all_trans_dict = []
+
     if os.path.exists(in_dir):
         if not os.path.isdir(in_dir):
             raise TypeError("Input directory must not be a file.")
@@ -51,13 +53,22 @@ def track(in_dir, out_dir, cat_file):
 
             for t in trans:
                 vendor, date, amount = t["vendor"], t["date"], t["amount"]
-
-                cat = helpers.categorize(vendor, categories)
-                main_cat = cat.split(".")[0]
-                if main_cat != "ignore":
-                    all_trans.append((date, amount, vendor, cat))
+                all_trans_dict.append(t)
+                all_trans.append((date, amount, vendor))
 
         all_trans.sort(key=lambda t: helpers.day_rank(t[0]))
+        all_trans_dict.sort(key=lambda t: helpers.day_rank(t["date"]))
+
+
+    # categorize
+    print("Transactions read.")
+    choice = input("Save categorizations to cat_file? (Y/n): ")
+    write = choice == "Y"
+    cats = categorize.categorize(all_trans_dict,cat_file, write)
+
+    for i in range(len(all_trans)):
+        trans = (*all_trans[i], cats[i])
+        all_trans[i] = trans
 
     if len(all_trans) > 0:
         print(f"{len(all_trans)} transactions found. Writing to {out_dir}")
@@ -88,8 +99,6 @@ def track(in_dir, out_dir, cat_file):
 
     # Write uncategorized vendors to file
     out_txt = ""
-
-    categorize.categorize(uncat.keys())
 
     if len(uncat) > 0:
         print(f"Warning: {len(uncat)} uncategorized vendors found:")
