@@ -35,7 +35,7 @@ class CategorySelector:
 
             main = cat_split[0]
             tail = cat_split[1:]
-            
+
             if main not in structure:
                 structure[main] = {}
             if len(tail) > 0:
@@ -47,7 +47,7 @@ class CategorySelector:
         def str_helper(structure, level=1, level_str=""):
             out = ""
             for i, key in enumerate(structure):
-                out += f"{"\t"*level}[{level_str}{i + 1}] {key}\n"
+                out += f"{'\t'*level}[{level_str}{i + 1}] {key}\n"
                 out += str_helper(structure[key], level + 1, f"{level_str}{i + 1}.")
             return out
 
@@ -76,7 +76,7 @@ class CategorySelector:
             else:
                 if len(tail) == 0:
                     return f"{main}"
-                
+
                 return f"{main}.{select_helper({}, ".".join(tail))}"
 
         print("Pick a category or enter a new one:")
@@ -87,6 +87,7 @@ class CategorySelector:
         self.add_category(cat)
 
         return cat
+
 
 def categorize(transactions, cat_file, write=False):
     uncat_ti: set = set(
@@ -117,7 +118,7 @@ def categorize(transactions, cat_file, write=False):
             if transaction["vendor"] not in uncat_vendors:
                 uncat_vendors.append(transaction["vendor"])
                 ui_ti[len(uncat_vendors) - 1] = []
-            ui_ti[len(uncat_vendors) - 1].append(i) 
+            ui_ti[len(uncat_vendors) - 1].append(i)
 
     uncat_ui = set([i for i in range(len(uncat_vendors))])
     used = []
@@ -157,15 +158,17 @@ def categorize(transactions, cat_file, write=False):
                 mi = int(matches[1, i])
                 mdist = matches[0, i]
 
-                print(f"\t[{i+1}] {uncat_vendors[mi]:<{VEND_WIDTH}} {helpers.percent_bar(1 - mdist)}")
-    
+                print(
+                    f"\t[{i+1}] {uncat_vendors[mi]:<{VEND_WIDTH}} {helpers.percent_bar(1 - mdist)}"
+                )
+
             selection = input("Matches: ")
             inds = helpers.parse_num_selection(selection)
 
             for i in inds:
-                i = i-1
+                i = i - 1
                 if i < nn and i >= 0:
-                    vendors.append(int(matches[1,i]))
+                    vendors.append(int(matches[1, i]))
                 else:
                     raise IndexError(f"{i+1} out of range for selection of length {nn}")
 
@@ -185,7 +188,7 @@ def categorize(transactions, cat_file, write=False):
                 uncat_ui.remove(ui)
             except:
                 pass
-        
+
         # write to file
 
         if write:
@@ -194,7 +197,7 @@ def categorize(transactions, cat_file, write=False):
                 for ui in vendors:
                     vend = uncat_vendors[ui]
                     writer.writerow([vend, *cat.split(".")])
-        
+
     # Cleanup
 
     categories = {}
@@ -203,7 +206,7 @@ def categorize(transactions, cat_file, write=False):
 
         if cat is not None:
             categories[trans["vendor"]] = cat
-        
+
     for i, trans in enumerate(transactions):
         cat = categorized[i]
 
@@ -212,7 +215,10 @@ def categorize(transactions, cat_file, write=False):
 
     return categorized
 
-def closest_match(i: int | list[int], distance_matrix: np.ndarray, exclude: list[int]=[]):
+
+def closest_match(
+    i: int | list[int], distance_matrix: np.ndarray, exclude: list[int] = []
+):
     """
     Return a sorted array of distances and transaction indices
 
@@ -279,7 +285,10 @@ def trans_categorize(vendor, categories):
     """
 
     for line in categories:
-        if re.search(line[0], vendor, re.IGNORECASE) is not None or line[0].strip() == vendor.strip():
+        if (
+            re.search(line[0], vendor, re.IGNORECASE) is not None
+            or line[0].strip() == vendor.strip()
+        ):
             return ".".join([line[n].strip() for n in range(1, len(line))])
     return "~"
 
@@ -312,21 +321,3 @@ def read_categories(cat_file):
                 categories.append((reg_ex, *category.split(".")))
 
     return categories
-
-
-
-if __name__ == "__main__":
-    TRANS_FILE = "Z:\\bill_tracker\\bill_output\\all_transactions.csv"
-    CAT_FILE = "Z:\\bill_tracker\\_categories.csv"
-
-    transactions = []
-
-    with open(TRANS_FILE, "r") as f_stream:
-        reader = csv.reader(f_stream)
-
-        for line in reader:
-            transaction = {"date": line[0], "amount": line[1], "vendor": line[2]}
-
-            transactions.append(transaction)
-
-    categorize(transactions, CAT_FILE)
