@@ -35,7 +35,7 @@ def parse(statement_path):
             if local_month == 12:
                 local_year = year - 1
 
-        transactions[i]["date"] = f"{trans["date"]}/{local_year}"
+        transactions[i]["date"] = f"{trans['date']}/{local_year}"
 
     return transactions
 

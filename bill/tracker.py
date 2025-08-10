@@ -59,12 +59,11 @@ def track(in_dir, out_dir, cat_file):
         all_trans.sort(key=lambda t: helpers.day_rank(t[0]))
         all_trans_dict.sort(key=lambda t: helpers.day_rank(t["date"]))
 
-
     # categorize
     print("Transactions read.")
     choice = input("Save categorizations to cat_file? (Y/n): ")
     write = choice == "Y"
-    cats = categorize.categorize(all_trans_dict,cat_file, write)
+    cats = categorize.categorize(all_trans_dict, cat_file, write)
 
     for i in range(len(all_trans)):
         trans = (*all_trans[i], cats[i])
