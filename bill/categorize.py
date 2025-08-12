@@ -153,7 +153,9 @@ def categorize(transactions, cat_file, write=False):
                 for i in vendors:
                     print(f"\t{uncat_vendors[i]}")
 
-            print(f"The closest {nn} matches are:")
+            print(
+                f"The closest {nn} matches are ({len(uncat_ui) - len(vendors)} total remaining):"
+            )
             for i in range(nn):
                 mi = int(matches[1, i])
                 mdist = matches[0, i]
@@ -285,10 +287,7 @@ def trans_categorize(vendor, categories):
     """
 
     for line in categories:
-        if (
-            re.search(line[0], vendor, re.IGNORECASE) is not None
-            or line[0].strip() == vendor.strip()
-        ):
+        if line[0].strip() == vendor.strip():
             return ".".join([line[n].strip() for n in range(1, len(line))])
     return "~"
 
