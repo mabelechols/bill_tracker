@@ -318,7 +318,14 @@ def read_categories(cat_file):
                 elif len(line) == 1:
                     raise ValueError(f"Malformed category in {cat_file} on line {i}")
 
-                reg_ex, category = line[0], ".".join(line[1:])
-                categories.append((reg_ex, *category.split(".")))
+                category = ""
+                for l in line[1:]:
+                    if l.strip() != "":
+                        category += l
+                        category += "."
+
+                reg_ex = line[0]
+
+                categories.append((reg_ex, *category[:-1].split(".")))
 
     return categories
