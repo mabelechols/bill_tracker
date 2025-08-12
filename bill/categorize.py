@@ -125,6 +125,8 @@ def categorize(transactions, cat_file, write=False):
 
     # Create selector
     sel = CategorySelector(categorized)
+    for c in file_cats:
+        sel.add_category(".".join(c[1:]))
 
     # Calculate distances for all pairs
     dist_mat = distance_matrix(uncat_vendors)
