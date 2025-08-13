@@ -54,7 +54,9 @@ def track(in_dir, out_dir, cat_file):
 
             for t in trans:
                 vendor, date, amount = t["vendor"], Date(t["date"]), t["amount"]
-                all_trans_dict.append(t)
+                all_trans_dict.append(
+                    {"vendor": vendor, "date": date, "amount": amount}
+                )
                 all_trans.append((date, amount, vendor))
 
         all_trans.sort(key=lambda t: t[0].to_int())
