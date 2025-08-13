@@ -4,6 +4,7 @@ import csv
 from ..utility import helpers
 import shutil
 from . import categorize
+from ..utility.date import Date
 
 
 def track(in_dir, out_dir, cat_file):
@@ -52,12 +53,12 @@ def track(in_dir, out_dir, cat_file):
             trans = parser.parse(os.path.join(in_dir, statement))
 
             for t in trans:
-                vendor, date, amount = t["vendor"], t["date"], t["amount"]
+                vendor, date, amount = t["vendor"], Date(t["date"]), t["amount"]
                 all_trans_dict.append(t)
                 all_trans.append((date, amount, vendor))
 
-        all_trans.sort(key=lambda t: helpers.day_rank(t[0]))
-        all_trans_dict.sort(key=lambda t: helpers.day_rank(t["date"]))
+        all_trans.sort(key=lambda t: t[0].to_int())
+        all_trans_dict.sort(key=lambda t: t[0].to_int())
 
     # categorize
     print("Transactions read.")
@@ -94,7 +95,7 @@ def track(in_dir, out_dir, cat_file):
             uncat[vendor].append((date, amount))
 
     for vendor in uncat:
-        uncat[vendor] = sorted(uncat[vendor], key=lambda t: helpers.day_rank(t[0]))
+        uncat[vendor] = sorted(uncat[vendor], key=lambda t: t[0].to_int())
 
     # Write uncategorized vendors to file
     out_txt = ""
