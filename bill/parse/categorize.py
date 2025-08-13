@@ -2,10 +2,7 @@ from Levenshtein import distance
 import numpy as np
 import os
 
-try:
-    from . import helpers
-except:
-    import helpers
+from ..utility import helpers
 import csv
 import re
 

@@ -1,5 +1,8 @@
 import re
+from typing import TypedDict
 import os
+
+# from .date import Date
 
 
 def to_float(amount: str):
@@ -14,53 +17,6 @@ def to_float(amount: str):
     """
 
     return float("".join(amount.split(",")))
-
-
-def day_rank(date):
-    """
-    Returns an integer representing the number of days since 01/01/0000
-
-        Parameters:
-            date (str): The date string in the form mm/dd/yyyy
-
-        Returns:
-            int: The number of days since 01/01/0000
-    """
-
-    def is_leap(yr):
-        if yr % 4 == 0:
-            if yr % 100 == 0:
-                if yr % 400 == 0:
-                    return True
-                return False
-            return True
-        return False
-
-    def days_before(mo, yr):
-        days = 0
-        for i in range(1, mo):
-            if i in [1, 3, 5, 7, 8, 10, 12]:
-                days += 31
-            elif i != 2:
-                days += 30
-            else:
-                days += 28 + is_leap(yr)
-
-        for i in range(yr):
-            if is_leap(i):
-                days += 366
-            else:
-                days += 365
-
-        return days
-
-    out = 0
-    mo, da, yr = date.split("/")
-
-    out += days_before(int(mo), int(yr))
-    out += int(da)
-
-    return out
 
 
 def file_extension(file_path):
@@ -94,22 +50,8 @@ def document_info(file_path):
     """
 
     def month_convert(mo_str):
-        MONTHS = [
-            "Jan",
-            "Feb",
-            "Mar",
-            "Apr",
-            "May",
-            "Jun",
-            "Jul",
-            "Aug",
-            "Sep",
-            "Oct",
-            "Nov",
-            "Dec",
-        ]
-        for i, m in enumerate(MONTHS):
-            if m == mo_str:
+        for i, m in enumerate(Date.MONTHS):
+            if m[:3] == mo_str:
                 return i + 1
 
         raise ValueError(f"{mo_str} is not a valid month")
@@ -121,7 +63,18 @@ def document_info(file_path):
         "Discover": "Discover-Statement-(\\d{4})(\\d{2})\\d{2}.csv",
     }
 
-    info = {"name": None, "bank": None, "month": None, "year": None}
+    class Info(TypedDict):
+        name: str | None
+        bank: str | None
+        month: int | None
+        year: int | None
+
+    info: Info = {
+        "name": None,
+        "bank": None,
+        "month": None,
+        "year": None,
+    }
 
     _, f_name = os.path.split(file_path)
 
@@ -141,6 +94,8 @@ def document_info(file_path):
 
     bank = banks.pop()
     groups = re.search(NAME_CONVENTIONS[bank], f_name)
+    if groups is None:
+        raise ValueError(f"Unrecognized file name {f_name}")
 
     info["bank"] = bank
     info["name"] = f_name
@@ -154,8 +109,9 @@ def document_info(file_path):
 
     return info
 
-def parse_num_selection(output : str):
-    raw_ranges = output.split(",")
+
+def parse_num_selection(choice: str):
+    raw_ranges = choice.split(",")
     stripped_ranges = []
 
     for raw in raw_ranges:
@@ -172,10 +128,10 @@ def parse_num_selection(output : str):
                 s = rng.split("-")
                 si = int(s[0])
                 ei = int(s[1])
-                output.extend(range(si, ei+1))
+                output.extend(range(si, ei + 1))
             except:
                 raise ValueError(f"Unrecognized value {rng}")
-    
+
     return output
 
 
@@ -191,9 +147,7 @@ def percent_bar(p, w=10):
             bar += FILL
         else:
             bar += UNFILL
-        
-        f += 1/w
-    
-    return f"{bar}"
 
-    
+        f += 1 / w
+
+    return f"{bar}"

@@ -1,7 +1,7 @@
 import os
 from . import parser
 import csv
-from . import helpers
+from ..utility import helpers
 import shutil
 from . import categorize
 

@@ -1,6 +1,6 @@
 from pypdf import PdfReader
 import re
-from . import helpers
+from ..utility import helpers
 import csv
 
 
