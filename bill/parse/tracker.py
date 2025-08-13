@@ -60,7 +60,7 @@ def track(in_dir, out_dir, cat_file):
                 all_trans.append((date, amount, vendor))
 
         all_trans.sort(key=lambda t: t[0].to_int())
-        all_trans_dict.sort(key=lambda t: t[0].to_int())
+        all_trans_dict.sort(key=lambda t: t["date"].to_int())
 
     # categorize
     print("Transactions read.")
